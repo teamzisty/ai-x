@@ -50,3 +50,8 @@ bot.events.interactionCreate = async (b, interaction) => {
 }
 
 await startBot(bot)
+
+{/* Deno Cron Settings */}
+Deno.cron("Continuous Request", "*/2 * * * *", () => {
+    console.log("running...");
+});
