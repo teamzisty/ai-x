@@ -2,7 +2,7 @@ import { dotenv } from "./deps.ts"
 
 dotenv.configSync({
     export: true,
-    path: "./.env.local",
+    path: "./.env",
 })
 
 export const Secret = {
