@@ -63,6 +63,8 @@ bot.events.messageCreate = async (bot, message) => {
   // @ Mention the bot to trigger ai
   if (message.content.startsWith(`<@${bot.id}>`)) {
     try {
+      await bot.helpers.startTyping(message.channelId);
+
       const openai = new OpenAI({
         baseURL: "https://capi.voids.top/v1",
         apiKey: "no_api_key_needed",
