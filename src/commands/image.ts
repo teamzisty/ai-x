@@ -1,4 +1,4 @@
-import { Bot, Interaction } from "../../deps.ts";
+import { Bot, Interaction } from "@root/deps.ts";
 
 export const imageCommand = {
     name: "image",
