@@ -1,4 +1,4 @@
-import { dotenv } from "./deps.ts"
+import { dotenv } from "@root/deps.ts"
 
 dotenv.configSync({
     export: true,

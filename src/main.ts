@@ -1,9 +1,10 @@
-import { createBot, Intents, startBot } from "../deps.ts"
-import { Secret } from "../secret.ts"
-import { helpCommand } from "./commands/help.ts"
-import { imageCommand } from "./commands/image.ts"
+import { createBot, Intents, startBot } from "@root/deps.ts"
+import { Secret } from "@root/secret.ts"
+import { helpCommand } from "@/commands/help.ts"
+import { textCommand } from "@/commands/text.ts"
+import { imageCommand } from "@/commands/image.ts"
 
-const commands = [helpCommand, imageCommand]
+const commands = [helpCommand, textCommand, imageCommand]
 
 const bot = createBot({
     token: Secret.TOKEN,
