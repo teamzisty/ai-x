@@ -1,4 +1,4 @@
-import { createBot, Intents, startBot, OpenAI } from "@root/deps.ts";
+import { createBot, Intents, startBot } from "@root/deps.ts";
 import { Secret } from "@root/secret.ts";
 import { helpCommand } from "@/commands/help.ts";
 import { textCommand } from "@/commands/text.ts";
@@ -59,41 +59,63 @@ bot.events.interactionCreate = async (b, interaction) => {
 };
 
 bot.events.messageCreate = async (bot, message) => {
-  if (message.isFromBot) return; // Ignore bot messages
-  // @ Mention the bot to trigger ai
+  if (message.isFromBot) return;
   if (message.content.startsWith(`<@${bot.id}>`)) {
     try {
       await bot.helpers.startTyping(message.channelId);
 
-      const openai = new OpenAI({
-        baseURL: "https://capi.voids.top/v1",
-        apiKey: "no_api_key_needed",
-      });
+      const url = new URL(`https://ai-x.ri0n.dev/api`);
+      url.searchParams.set("text", message.content.replace(`<@${bot.id}>`, ""));
+      url.searchParams.set("type", "text");
 
-      const textResponse = await openai.chat.completions.create({
-        model: "gpt-4.1-2025-04-14",
-        messages: [
-          {
-            role: "user",
-            content: message.content.replace(`<@${bot.id}>`, ""),
-          },
-        ],
-      });
+      const res = await fetch(url.toString());
+      const result = await res.json();
 
-      const text = textResponse.choices[0].message.content;
-      if (!text) {
-        throw new Error("API returned empty text data");
+      if (result.type === "image" && result.url) {
+        const response = await fetch(result.url);
+        const buffer = await response.arrayBuffer();
+
+        await bot.helpers.sendMessage(message.channelId, {
+          content: "",
+          file: [
+            {
+              name: "image.png",
+              blob: new Blob([buffer], { type: "image/png" }),
+            },
+          ],
+          embeds: [{
+            title: "Generated Image",
+            description: `${result.prompt || "Image generated"}`,
+            image: {
+              url: `attachment://image.png`,
+            },
+            author: {
+              name: "AI-x",
+              iconUrl: "https://cdn.discordapp.com/avatars/1374103595015864331/5a627e23f79ba1694265aef9d59b4f69.webp?size=1024&format=webp",
+            },
+            footer: {
+              text: "model: GPT-4o | tools: Image Generation"
+            },
+            color: 0xffb3b3,
+          }],
+        });
+      } else if (result.type === "search" && result.result) {
+        await bot.helpers.sendMessage(message.channelId, {
+          content: `${result.result || "No response"}\n-# model: Gemini 2.0 Flash\n-# tools: LangSearch`,
+        });
+      } else if (result.type === "cmd" && result.result) {
+        await bot.helpers.sendMessage(message.channelId, {
+          content: `${result.result}\n-# model: GPT-4o\n-# tools: Command Execution`,
+        });
+      } else if (result.type === "text" && result.content) {
+        await bot.helpers.sendMessage(message.channelId, {
+          content: `${result.content}\n-# model: GPT-4o`,
+        });
+      } else {
+        await bot.helpers.sendMessage(message.channelId, {
+          content: `Sorry, an error occurred with the API. Please try again after a short while. If the problem persists, contact the developer.\n\n-# API Error`,
+        });
       }
-
-      await bot.helpers.sendMessage(message.channelId, {
-        content: text,
-        messageReference: {
-          channelId: message.channelId,
-          guildId: message.guildId,
-          messageId: message.id,
-          failIfNotExists: true,
-        },
-      });
     } catch (error) {
       console.error("Error processing message:", error);
       await bot.helpers.sendMessage(message.channelId, {

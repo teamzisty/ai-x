@@ -23,39 +23,37 @@ export const imageCommand = {
                 throw new Error("No prompt provided");
             }
 
-            const imageResponse = await fetch(`https://ai-x.ri0n.dev/api/image/?prompt=${encodeURIComponent(prompt)}`);
+            const imageResponse = await fetch(`https://ai-x.ri0n.dev/api/?text=${encodeURIComponent(prompt)}&type=image`);
             if (!imageResponse.ok) {
                 throw new Error(`API returned status ${imageResponse.status}: ${imageResponse.statusText}`);
             }
 
-            const contentType = imageResponse.headers.get("Content-Type") || "image/png";
+            const res = await fetch(imageResponse.url);
+            const result = await res.json();
 
-            const imageArrayBuffer = await imageResponse.arrayBuffer();
-            const imageBuffer = new Uint8Array(imageArrayBuffer);
-
-            if (imageBuffer.length === 0) {
-                throw new Error("API returned empty image data");
-            }
-
-            const file = `generated-image-${Date.now()}.png`;
+            const response = await fetch(result.url);
+            const buffer = await response.arrayBuffer();
 
             await b.helpers.editOriginalInteractionResponse(interaction.token, {
                 content: "",
                 file: [
                     {
-                        name: file,
-                        blob: new Blob([imageBuffer], { type: contentType }),
+                        name: "image.png",
+                        blob: new Blob([buffer], { type: "image/png" }),
                     },
                 ],
                 embeds: [{
                     title: "Generated Image",
-                    description: prompt,
+                    description: `${prompt}\n`,
                     image: {
-                        url: `attachment://${file}`,
+                        url: `attachment://image.png`,
                     },
                     author: {
                         name: "AI-x",
                         iconUrl: "https://cdn.discordapp.com/avatars/1374103595015864331/5a627e23f79ba1694265aef9d59b4f69.webp?size=1024&format=webp",
+                    },
+                    footer: {
+                        text: "model: GPT-4o | tools: Image Generation"
                     },
                     color: 0xffb3b3,
                 }],
