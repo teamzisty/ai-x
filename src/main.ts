@@ -144,9 +144,7 @@ bot.events.messageCreate = async (bot, message) => {
 
 await startBot(bot);
 
-{
-  /* Deno Cron Settings */
-}
-Deno.cron("Continuous Request", "*/2 * * * *", () => {
+{ /* Deno Cron Settings */ }
+Deno.cron("Continuous Request", "*/1 * * * *", () => {
   console.log("running...");
 });
