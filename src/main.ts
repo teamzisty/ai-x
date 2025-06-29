@@ -58,10 +58,25 @@ bot.events.interactionCreate = async (b, interaction) => {
   }
 };
 
+const processingUsers = new Set();
 bot.events.messageCreate = async (bot, message) => {
   if (message.isFromBot) return;
   if (message.content.startsWith(`<@${bot.id}>`)) {
+    const userId = message.authorId;
+
+    if (processingUsers.has(userId)) {
+      const reply = await bot.helpers.sendMessage(message.channelId, {
+        content: "⏳ 前のリクエストを処理中です。",
+      });
+      setTimeout(() => {
+        bot.helpers.deleteMessage(message.channelId, reply.id);
+      }, 3000);
+      return;
+    }
+
     try {
+      processingUsers.add(userId);
+      
       await bot.helpers.startTyping(message.channelId);
 
       const url = new URL(`https://ai-x.ri0n.dev/api`);
@@ -121,6 +136,8 @@ bot.events.messageCreate = async (bot, message) => {
       await bot.helpers.sendMessage(message.channelId, {
         content: "An error occurred while processing your message.",
       });
+    } finally {
+      processingUsers.delete(userId);
     }
   }
 };
