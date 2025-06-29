@@ -17,13 +17,13 @@ export const textCommand = {
       type: 3,
       required: true,
       choices: [
-        { name: "GPT-4o", value: "gpt-4o-2024-11-20" },
-        { name: "GPT-4.1", value: "gpt-4.1-2025-04-14" },
-        { name: "o4-mini", value: "o4-mini-2025-04-16" },
-        { name: "o3", value: "o3-2025-04-16" },
-        { name: "o3-pro", value: "o3-pro-2025-06-10" },
-        { name: "Gemini 2.5 Pro", value: "gemini-2.5-pro-preview-06-05" },
-        { name: "Gemini 2.5 Flash", value: "gemini-2.5-flash-preview-04-17" },
+        { name: "GPT-4o", value: "gpt-4o" },
+        { name: "GPT-4.1", value: "gpt-4.1" },
+        { name: "GPT-4.1-mini", value: "gpt-4.1-mini" },
+        { name: "o4-mini", value: "o4-mini" },
+        { name: "o3", value: "o3" },
+        { name: "Gemini 2.0 Flash", value: "gemini-2.0-flash" },
+        { name: "Gemini Flash", value: "gemini-flash" },
       ],
     }
   ],
@@ -40,36 +40,64 @@ export const textCommand = {
       const prompt = interaction.data?.options?.find(
         (opt) => opt.name === "prompt"
       )?.value as string;
+
       const model = interaction.data?.options?.find(
         (opt) => opt.name === "model"
       )?.value as string;
-      if (!prompt || !model) {
-        throw new Error("No prompt or model provided");
+
+      const url = new URL("https://ai-x.ri0n.dev/api");
+      url.searchParams.set("text", prompt);
+      url.searchParams.set("type", "text");
+      url.searchParams.set("model", model);
+
+      const res = await fetch(url.toString());
+      const result = await res.json();
+
+      if (result.type === "image" && result.url) {
+        const response = await fetch(result.url);
+        const buffer = await response.arrayBuffer();
+
+        await b.helpers.editOriginalInteractionResponse(interaction.token, {
+          content: "",
+          file: [
+            {
+              name: "image.png",
+              blob: new Blob([buffer], { type: "image/png" }),
+            },
+          ],
+          embeds: [{
+            title: "Generated Image",
+            description: `${result.prompt || "Image generated"}`,
+            image: {
+              url: `attachment://image.png`,
+            },
+            author: {
+              name: "AI-x",
+              iconUrl: "https://cdn.discordapp.com/avatars/1374103595015864331/5a627e23f79ba1694265aef9d59b4f69.webp?size=1024&format=webp",
+            },
+            footer: {
+              text: `model: ${model} | tools: Image Generation`
+            },
+            color: 0xffb3b3,
+          }],
+        });
+      } else if (result.type === "search" && result.result) {
+        await b.helpers.editOriginalInteractionResponse(interaction.token, {
+          content: `${result.result}\n-# model: Gemini 2.0 Flash\n-# tools: LangSearch`,
+        });
+      } else if (result.type === "cmd" && result.result) {
+        await b.helpers.editOriginalInteractionResponse(interaction.token, {
+          content: `${result.result}\n-# model: GPT-4o\n-# tools: Command Execution`,
+        });
+      } else if (result.type === "text" && result.content) {
+        await b.helpers.editOriginalInteractionResponse(interaction.token, {
+          content: `${result.content}\n-# model: ${model}`,
+        });
+      } else {
+        await b.helpers.editOriginalInteractionResponse(interaction.token, {
+          content: `Sorry, an error occurred with the API. Please try again after a short while. If the problem persists, contact the developer.\n\n-# API Error`,
+        });
       }
-
-      const openai = new OpenAI({
-        baseURL: "https://capi.voids.top/v1",
-        apiKey: "no_api_key_needed",
-      });
-
-      const textResponse = await openai.chat.completions.create({
-        model: model,
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-      });
-
-      const text = textResponse.choices[0].message.content;
-      if (!text) {
-        throw new Error("API returned empty text data");
-      }
-
-      await b.helpers.editOriginalInteractionResponse(interaction.token, {
-        content: text,
-      });
     } catch (_e) {
       await b.helpers.editOriginalInteractionResponse(interaction.token, {
         content: "",

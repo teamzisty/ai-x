@@ -16,7 +16,7 @@ export const helpCommand = {
               {
                 title: "Hi, I'm AI-x",
                 description:
-                  "AI-x is a free application that lets you generate images and text. You can generate images using commands, and generate text either through commands or by mentioning the app.\n\n❓ Need support? If so, please visit [Zisty Hub](https://discord.gg/6BPfVm6cST)\n\nDeveloper: Zisty(Rion and rai)",
+                  "AI-x is a free application that allows you to generate images, perform searches, and have conversations. You can request it to carry out tasks such as image generation and searching.\n\n❓ Need support? If so, please visit [Zisty Hub](https://discord.gg/6BPfVm6cST)\n\nDeveloper: Zisty(Rion and rai)",
                 author: {
                   name: "AI-x",
                   iconUrl:
