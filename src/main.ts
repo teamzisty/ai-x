@@ -3,6 +3,7 @@ import { Secret } from "@root/secret.ts";
 import { helpCommand } from "@/commands/help.ts";
 import { textCommand } from "@/commands/text.ts";
 import { imageCommand } from "@/commands/image.ts";
+import { loadHistory, saveHistory } from "@/history.ts";
 
 const commands = [helpCommand, textCommand, imageCommand];
 
@@ -79,12 +80,22 @@ bot.events.messageCreate = async (bot, message) => {
       
       await bot.helpers.startTyping(message.channelId);
 
+      const history = await loadHistory(userId.toString());
+      const userMessage = {
+        author: "user" as const,
+        content: message.content.replace(/<@!?\d+>/g, "").trim(),
+      };
+      history.push(userMessage);
+
       const url = new URL(`https://ai-x.ri0n.dev/api`);
-      url.searchParams.set("text", message.content.replace(`<@${bot.id}>`, ""));
+      url.searchParams.set("text", userMessage.content);
       url.searchParams.set("type", "text");
+      url.searchParams.set("history", JSON.stringify(history));
 
       const res = await fetch(url.toString());
       const result = await res.json();
+
+      let botResponse = "";
 
       if (result.type === "image" && result.url) {
         const response = await fetch(result.url);
@@ -114,23 +125,32 @@ bot.events.messageCreate = async (bot, message) => {
             color: 0xffb3b3,
           }],
         });
+        botResponse = result.prompt || "Image generated";
       } else if (result.type === "search" && result.result) {
         await bot.helpers.sendMessage(message.channelId, {
           content: `${result.result || "No response"}\n-# model: Gemini 2.0 Flash\n-# tools: LangSearch`,
         });
+        botResponse = result.result || "No response";
       } else if (result.type === "cmd" && result.result) {
         await bot.helpers.sendMessage(message.channelId, {
           content: `${result.result}\n-# model: GPT-4o\n-# tools: Command Execution`,
         });
+        botResponse = result.result;
       } else if (result.type === "text" && result.content) {
         await bot.helpers.sendMessage(message.channelId, {
           content: `${result.content}\n-# model: GPT-4o`,
         });
+        botResponse = result.content;
       } else {
         await bot.helpers.sendMessage(message.channelId, {
           content: `Sorry, an error occurred with the API. Please try again after a short while. If the problem persists, contact the developer.\n\n-# API Error`,
         });
+        botResponse = "API Error";
       }
+
+      history.push({ author: "bot", content: botResponse });
+      await saveHistory(userId.toString(), history);
+
     } catch (error) {
       console.error("Error processing message:", error);
       await bot.helpers.sendMessage(message.channelId, {
