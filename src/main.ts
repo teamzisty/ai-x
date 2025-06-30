@@ -5,6 +5,10 @@ import { textCommand } from "@/commands/text.ts";
 import { imageCommand } from "@/commands/image.ts";
 import { loadHistory, saveHistory } from "@/history.ts";
 
+declare global {
+  var __botStarted: boolean;
+}
+
 const commands = [helpCommand, textCommand, imageCommand];
 
 const bot = createBot({
@@ -162,7 +166,10 @@ bot.events.messageCreate = async (bot, message) => {
   }
 };
 
-await startBot(bot);
+if (!globalThis.__botStarted) {
+  globalThis.__botStarted = true;
+  await startBot(bot);
+}
 
 { /* Deno Cron Settings */ }
 Deno.cron("Continuous Request", "*/1 * * * *", () => {
