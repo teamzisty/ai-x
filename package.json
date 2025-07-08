@@ -1,0 +1,19 @@
+{
+  "name": "AI-x Node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.12.1",
+  "dependencies": {
+    "@discordjs/rest": "^2.5.1",
+    "discord-api-types": "^0.38.15",
+    "discord.js": "^14.21.0",
+    "dotenv": "^17.1.0"
+  }
+}
