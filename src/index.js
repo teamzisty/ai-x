@@ -90,13 +90,10 @@ client.on('messageCreate', async (message) => {
 
             const url = new URL('https://ai-x.ri0n.dev/api');
             url.searchParams.set('userId', hashedUserId);
-            url.searchParams.set('text', message.content);
-            url.searchParams.set('type', 'text');
+            url.searchParams.set('ask', message.content);
 
             const res = await fetch(url.toString());
             const result = await res.json();
-
-            let botResponse = '';
 
             if (result.type === 'image' && result.url) {
                 const response = await fetch(result.url);
@@ -113,28 +110,28 @@ client.on('messageCreate', async (message) => {
                         title: 'Generated Image',
                         description: result.prompt || 'Image generated',
                         image: { url: 'attachment://image.png' },
-                        footer: { text: 'model: GPT-4o | tools: Image Generation' },
+                        footer: { text: 'Model: GPT-4o / Tools: Image Generation' },
                         color: 0xffb3b3
                     }]
                 });
 
                 botResponse = result.prompt || 'Image generated';
-            } else if (result.type === 'search' && result.result) {
-                await message.channel.send(`${result.result}\n-# model: Gemini 2.0 Flash\n-# tools: LangSearch`);
+            } else if (result.type === 'gemini' && result.result) {
+                await message.channel.send(`${result.result}\n-# Model: Gemini 2.5 Pro`);
                 botResponse = result.result;
-            } else if (result.type === 'cmd' && result.result) {
-                await message.channel.send(`${result.result}\n-# model: GPT-4o\n-# tools: Command Execution`);
+            } else if (result.type === 'claude' && result.result) {
+                await message.channel.send(`${result.result}\n-# Model: Claude Sonnet 4`);
                 botResponse = result.result;
-            } else if (result.type === 'text' && result.content) {
-                await message.channel.send(`${result.content}\n-# model: GPT-4o`);
-                botResponse = result.content;
+            } else if (result.type === 'ask' && result.result) {
+                await message.channel.send(`${result.result	}\n-# Model: GPT-4o`);
+                botResponse = result.result;
             } else {
-                await message.channel.send('API エラーが発生しました。しばらくしてから再試行してください。');
+                await message.channel.send('Sorry, an error occurred with the API. Please try again after a short while. If the problem persists, contact the developer.');
                 botResponse = 'API Error';
             }
         } catch (error) {
             console.error('Error processing message:', error);
-            await message.channel.send('メッセージの処理中にエラーが発生しました。');
+            await message.channel.send('An error occurred while processing your request. Please try again later.');
         } finally {
             processingUsers.delete(userId);
         }
